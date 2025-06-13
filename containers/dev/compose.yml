@@ -3,26 +3,27 @@ services:
   dev:
     privileged: true
     build:
-      context: ${OPENHANDS_WORKSPACE:-../../}
-      dockerfile: ./containers/dev/Dockerfile
-    image: openhands:dev
-    container_name: openhands-dev
+      context: ${ELLIESTUDIO_WORKSPACE:-../../}
+      dockerfile: containers/dev/Dockerfile
+    image: elliestudio:dev
+    container_name: elliestudio-dev
     environment:
       - BACKEND_HOST=${BACKEND_HOST:-"0.0.0.0"}
       - SANDBOX_API_HOSTNAME=host.docker.internal
       #
       - SANDBOX_RUNTIME_CONTAINER_IMAGE=${SANDBOX_RUNTIME_CONTAINER_IMAGE:-ghcr.io/all-hands-ai/runtime:0.42-nikolaik}
-      - SANDBOX_USER_ID=${SANDBOX_USER_ID:-1234}
-      - WORKSPACE_MOUNT_PATH=${WORKSPACE_BASE:-$PWD/workspace}
+      - SANDBOX_USER_ID=${SANDBOX_USER_ID:-42420}
+      - RUN_AS_ELLIESTUDIO=true
+      - FILE_STORE_PATH=/.elliestudio-state
+      - WORKSPACE_MOUNT_PATH=/opt/workspace_base
     ports:
       - "3000:3000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${ELLIESTUDIO_WORKSPACE:-../../}:/app
       - ${WORKSPACE_BASE:-$PWD/workspace}:/opt/workspace_base
-      # source code
-      - ${OPENHANDS_WORKSPACE:-../../}:/app
       # host credentials
       - $HOME/.git-credentials:/root/.git-credentials:ro
       - $HOME/.gitconfig:/root/.gitconfig:ro

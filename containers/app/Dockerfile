@@ -1,4 +1,4 @@
-ARG OPENHANDS_BUILD_VERSION=dev
+ARG ELLIESTUDIO_BUILD_VERSION=dev
 FROM node:22.16.0-bookworm-slim AS frontend-builder
 
 WORKDIR /app
@@ -28,23 +28,23 @@ COPY pyproject.toml poetry.lock ./
 RUN touch README.md
 RUN export POETRY_CACHE_DIR && poetry install --no-root && rm -rf $POETRY_CACHE_DIR
 
-FROM base AS openhands-app
+FROM base AS elliestudio-app
 
 WORKDIR /app
 
 # re-declare for this section
-ARG OPENHANDS_BUILD_VERSION
+ARG ELLIESTUDIO_BUILD_VERSION
 
-ENV RUN_AS_OPENHANDS=true
+ENV RUN_AS_ELLIESTUDIO=true
 # A random number--we need this to be different from the user's UID on the host machine
-ENV OPENHANDS_USER_ID=42420
+ENV ELLIESTUDIO_USER_ID=42420
 ENV SANDBOX_LOCAL_RUNTIME_URL=http://host.docker.internal
 ENV USE_HOST_NETWORK=false
 ENV WORKSPACE_BASE=/opt/workspace_base
-ENV OPENHANDS_BUILD_VERSION=$OPENHANDS_BUILD_VERSION
+ENV ELLIESTUDIO_BUILD_VERSION=$ELLIESTUDIO_BUILD_VERSION
 ENV SANDBOX_USER_ID=0
 ENV FILE_STORE=local
-ENV FILE_STORE_PATH=/.openhands-state
+ENV FILE_STORE_PATH=/.elliestudio-state
 RUN mkdir -p $FILE_STORE_PATH
 RUN mkdir -p $WORKSPACE_BASE
 
@@ -58,33 +58,33 @@ RUN sed -i 's/^UID_MIN.*/UID_MIN 499/' /etc/login.defs
 RUN sed -i 's/^UID_MAX.*/UID_MAX 1000000/' /etc/login.defs
 
 RUN groupadd app
-RUN useradd -l -m -u $OPENHANDS_USER_ID -s /bin/bash openhands && \
-    usermod -aG app openhands && \
-    usermod -aG sudo openhands && \
-    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-RUN chown -R openhands:app /app && chmod -R 770 /app
-RUN sudo chown -R openhands:app $WORKSPACE_BASE && sudo chmod -R 770 $WORKSPACE_BASE
-USER openhands
+RUN useradd -l -m -u $ELLIESTUDIO_USER_ID -s /bin/bash elliestudio && \
+    usermod -aG app elliestudio && \
+    usermod -aG sudo elliestudio && \
+    echo "elliestudio ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN chown -R elliestudio:app /app && chmod -R 770 /app
+RUN sudo chown -R elliestudio:app $WORKSPACE_BASE && sudo chmod -R 770 $WORKSPACE_BASE
+USER elliestudio
 
 ENV VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH='/app'
 
-COPY --chown=openhands:app --chmod=770 --from=backend-builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+COPY --chown=elliestudio:app --chmod=770 --from=backend-builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
-COPY --chown=openhands:app --chmod=770 ./microagents ./microagents
-COPY --chown=openhands:app --chmod=770 ./openhands ./openhands
-COPY --chown=openhands:app --chmod=777 ./openhands/runtime/plugins ./openhands/runtime/plugins
-COPY --chown=openhands:app pyproject.toml poetry.lock README.md MANIFEST.in LICENSE ./
+COPY --chown=elliestudio:app --chmod=770 ./microagents ./microagents
+COPY --chown=elliestudio:app --chmod=770 ./elliestudio ./elliestudio
+COPY --chown=elliestudio:app --chmod=777 ./elliestudio/runtime/plugins ./elliestudio/runtime/plugins
+COPY --chown=elliestudio:app pyproject.toml poetry.lock README.md MANIFEST.in LICENSE ./
 
-# This is run as "openhands" user, and will create __pycache__ with openhands:openhands ownership
-RUN python openhands/core/download.py # No-op to download assets
+# This is run as "elliestudio" user, and will create __pycache__ with elliestudio:elliestudio ownership
+RUN python elliestudio/core/download.py # No-op to download assets
 # Add this line to set group ownership of all files/directories not already in "app" group
-# openhands:openhands -> openhands:app
+# elliestudio:elliestudio -> elliestudio:app
 RUN find /app \! -group app -exec chgrp app {} +
 
-COPY --chown=openhands:app --chmod=770 --from=frontend-builder /app/build ./frontend/build
-COPY --chown=openhands:app --chmod=770 ./containers/app/entrypoint.sh /app/entrypoint.sh
+COPY --chown=elliestudio:app --chmod=770 --from=frontend-builder /app/build ./frontend/build
+COPY --chown=elliestudio:app --chmod=770 ./containers/app/entrypoint.sh /app/entrypoint.sh
 
 USER root
 

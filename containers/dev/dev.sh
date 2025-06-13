@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/bash
 set -o pipefail
 
 function get_docker() {
-    echo "Docker is required to build and run OpenHands."
+    echo "Docker is required to build and run EllieStudio."
     echo "https://docs.docker.com/get-started/get-docker/"
     exit 1
 }
@@ -24,15 +24,15 @@ exit_if_indocker
 check_tools
 
 ##
-OPENHANDS_WORKSPACE=$(git rev-parse --show-toplevel)
+ELLIESTUDIO_WORKSPACE=$(git rev-parse --show-toplevel)
 
-cd "$OPENHANDS_WORKSPACE/containers/dev/" || exit 1
+cd "$ELLIESTUDIO_WORKSPACE/containers/dev/" || exit 1
 
 ##
 export BACKEND_HOST="0.0.0.0"
 #
 export SANDBOX_USER_ID=$(id -u)
-export WORKSPACE_BASE=${WORKSPACE_BASE:-$OPENHANDS_WORKSPACE/workspace}
+export WORKSPACE_BASE=${WORKSPACE_BASE:-$ELLIESTUDIO_WORKSPACE/workspace}
 
 docker compose run --rm --service-ports "$@" dev
 
